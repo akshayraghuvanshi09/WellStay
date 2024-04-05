@@ -20,7 +20,6 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.serviceAppartment.dto.ApartmentDTO;
-import com.serviceAppartment.model.Apartment;
 import com.serviceAppartment.service.ApartmentService;
 
 @RestController
