@@ -19,31 +19,34 @@ import com.serviceAppartment.model.Address;
 import com.serviceAppartment.model.Amenity;
 import com.serviceAppartment.model.Apartment;
 import com.serviceAppartment.model.Booking;
+import com.serviceAppartment.model.Cancellation;
 import com.serviceAppartment.model.Image;
 import com.serviceAppartment.model.Room;
 import com.serviceAppartment.repository.AmenityRepository;
 import com.serviceAppartment.repository.ApartmentRepository;
 import com.serviceAppartment.repository.BookingRepository;
+import com.serviceAppartment.repository.CancellationRepository;
 import com.serviceAppartment.repository.ImageRepository;
 import com.serviceAppartment.service.ApartmentService;
 
-
 @Service
 public class ApartmentServiceImpl implements ApartmentService {
-	
+
 	@Autowired
 	private ImageRepository imageRepository;
 
-	
 	@Autowired
 	private AmenityRepository amenityRepository;
 
 	@Autowired
 	private ApartmentRepository apartmentRepository;
-	
+
 	@Autowired
 	private BookingRepository bookingRepository;
-	
+
+	@Autowired
+	private CancellationRepository cancellationRepository;
+
 	@Autowired
 	private ModelMapper modelMapper;
 
@@ -51,6 +54,7 @@ public class ApartmentServiceImpl implements ApartmentService {
 	@Transactional(readOnly = true)
 	public List<ApartmentDTO> getAllApartments() {
 		List<Apartment> apartments = apartmentRepository.findAll();
+		System.out.println(apartments);
 		return apartments.stream().map(this::convertToDto).collect(Collectors.toList());
 	}
 
@@ -62,75 +66,67 @@ public class ApartmentServiceImpl implements ApartmentService {
 	}
 
 	@Override
-    public ApartmentDTO createOrUpdateApartment(ApartmentDTO apartmentDto,List<MultipartFile> images) {
-		
-		
-        Apartment apartment = new Apartment();
-        apartment.setId(apartmentDto.getId());
-        apartment.setName(apartmentDto.getName());
-        apartment.setDescription(apartmentDto.getDescription());
-        apartment.setType(apartmentDto.getType());
-        apartment.setPrice(apartmentDto.getPrice());
-        apartment.isAvailable();
-        apartment.setFloor(apartmentDto.getFloor());
-        apartment.setSize(apartmentDto.getSize());
-        apartment.setFloor(apartmentDto.getFloor());
-        apartment.setYearBuilt(apartmentDto.getYearBuilt());
-      
-        
-        
-        // Map AddressDto to Address entity
-        Address address = new Address();
-        address.setId(apartmentDto.getAddress().getId());
-        address.setStreet(apartmentDto.getAddress().getStreet());
-        address.setCity(apartmentDto.getAddress().getCity());
-        address.setState(apartmentDto.getAddress().getState());
-        address.setZipCode(apartmentDto.getAddress().getZipCode());
+	public ApartmentDTO createOrUpdateApartment(ApartmentDTO apartmentDto, List<MultipartFile> images) {
 
-        // Map RoomDto to Room entity
-        Room room = new Room();
-        room.setId(apartmentDto.getRoom().getId());
-        room.setName(apartmentDto.getRoom().getName());
-        room.setBedrooms(apartmentDto.getRoom().getBedrooms());
-        room.setBathrooms(apartmentDto.getRoom().getBathrooms());
-        room.setSquareFootage(apartmentDto.getRoom().getSquareFootage());
-        room.setAvailable(apartmentDto.getRoom().isAvailable());
+		Apartment apartment = new Apartment();
+		apartment.setId(apartmentDto.getId());
+		apartment.setName(apartmentDto.getName());
+		apartment.setDescription(apartmentDto.getDescription());
+		apartment.setType(apartmentDto.getType());
+		apartment.setPrice(apartmentDto.getPrice());
+		apartment.isAvailable();
+		apartment.setFloor(apartmentDto.getFloor());
+		apartment.setSize(apartmentDto.getSize());
+		apartment.setFloor(apartmentDto.getFloor());
+		apartment.setYearBuilt(apartmentDto.getYearBuilt());
 
-        // Map AmenityDto list to Amenity entities
-        List<Amenity> amenities = apartmentDto.getAmenities().stream()
-                .map(amenityDto -> {
-                    Amenity amenity = new Amenity();
-                    amenity.setId(amenityDto.getId());
-                    amenity.setName((amenityRepository.findById(amenityDto.getId())).get().getName());
-                    return amenity;
-                })
-                .collect(Collectors.toList());
+		// Map AddressDto to Address entity
+		Address address = new Address();
+		address.setId(apartmentDto.getAddress().getId());
+		address.setStreet(apartmentDto.getAddress().getStreet());
+		address.setCity(apartmentDto.getAddress().getCity());
+		address.setState(apartmentDto.getAddress().getState());
+		address.setZipCode(apartmentDto.getAddress().getZipCode());
 
-        apartment.setAddress(address);
-        apartment.setRoom(room);
-        apartment.setAmenities(amenities);
+		// Map RoomDto to Room entity
+		Room room = new Room();
+		room.setId(apartmentDto.getRoom().getId());
+		room.setName(apartmentDto.getRoom().getName());
+		room.setBedrooms(apartmentDto.getRoom().getBedrooms());
+		room.setBathrooms(apartmentDto.getRoom().getBathrooms());
+		room.setSquareFootage(apartmentDto.getRoom().getSquareFootage());
+		room.setAvailable(apartmentDto.getRoom().isAvailable());
 
-        Apartment apartments = apartmentRepository.save(apartment);
-        
-        
-        for (MultipartFile imageFile : images) {
-            try {
-                String imagePath = ApartmentUtils.uploadImage(imageFile);
-               
-                Image image = new Image();
-                image.setImagePath(imagePath);
-                image.setApartment(apartment);
-                imageRepository.save(image);
-            } catch (IOException e) {
-                // Handle image upload error
-            }
-        
-      
-    }
-        return convertToDto(apartments);
-        
+		// Map AmenityDto list to Amenity entities
+		List<Amenity> amenities = apartmentDto.getAmenities().stream().map(amenityDto -> {
+			Amenity amenity = new Amenity();
+			amenity.setId(amenityDto.getId());
+			amenity.setName((amenityRepository.findById(amenityDto.getId())).get().getName());
+			return amenity;
+		}).collect(Collectors.toList());
+
+		apartment.setAddress(address);
+		apartment.setRoom(room);
+		apartment.setAmenities(amenities);
+
+		Apartment apartments = apartmentRepository.save(apartment);
+
+		for (MultipartFile imageFile : images) {
+			try {
+				String imagePath = ApartmentUtils.uploadImage(imageFile);
+
+				Image image = new Image();
+				image.setImagePath(imagePath);
+				image.setApartment(apartment);
+				imageRepository.save(image);
+			} catch (IOException e) {
+				// Handle image upload error
+			}
+
+		}
+		return convertToDto(apartments);
+
 	}
-
 
 	@Override
 	@Transactional
@@ -163,7 +159,7 @@ public class ApartmentServiceImpl implements ApartmentService {
 	private Apartment convertToEntity(ApartmentDTO apartmentDto) {
 		return modelMapper.map(apartmentDto, Apartment.class);
 	}
-	
+
 	public List<ApartmentDTO> getAvailableApartments(LocalDate checkInDate, LocalDate checkOutDate) {
 		// Fetch all apartments
 		List<ApartmentDTO> apartmentDTOs = getAllApartments();
@@ -179,29 +175,38 @@ public class ApartmentServiceImpl implements ApartmentService {
 				.filter(apartment -> isApartmentAvailable(apartment.getId(), checkInDate, checkOutDate))
 				.collect(Collectors.toList());
 
-		List<ApartmentDTO> availableApartmentsList = availableApartments.stream().map(e->modelMapper.map(e,ApartmentDTO.class)).collect(Collectors.toList());
-		
-		
+		List<ApartmentDTO> availableApartmentsList = availableApartments.stream()
+				.map(e -> modelMapper.map(e, ApartmentDTO.class)).collect(Collectors.toList());
+
 		return availableApartmentsList;
 	}
-
-
 
 	@Override
 	public boolean isApartmentAvailable(Long apartmentId, LocalDate checkInDate, LocalDate checkOutDate) {
 		// Fetch bookings for the apartment
-				List<Booking> bookings = bookingRepository.findByApartmentId(apartmentId);
 
-				// Check if there are any bookings overlapping with the given dates
-				for (Booking booking : bookings) {
-					LocalDate bookingCheckInDate = booking.getCheckInDate();
-					LocalDate bookingCheckOutDate = booking.getCheckOutDate();
-					if (checkInDate.isBefore(bookingCheckOutDate) && checkOutDate.isAfter(bookingCheckInDate)) {
-						// Dates overlap, apartment is not available
-						return false;
-					}
-				}
+		List<Cancellation> canceledBookings = cancellationRepository.findByApartmentId(apartmentId);
 
-				return true;
+		List<Booking> bookings = bookingRepository.findByApartmentId(apartmentId);
+
+		// Check if there are any bookings overlapping with the given dates
+		for (Booking booking : bookings) {
+			LocalDate bookingCheckInDate = booking.getCheckInDate();
+			LocalDate bookingCheckOutDate = booking.getCheckOutDate();
+			if (checkInDate.isBefore(bookingCheckOutDate) && checkOutDate.isAfter(bookingCheckInDate)) {
+
+				return false;
+			}
+		}
+		for (Cancellation cancellation : canceledBookings) {
+			LocalDate cancellationDate = cancellation.getCancellationDate();
+
+			if (checkInDate.isBefore(cancellationDate) && checkOutDate.isAfter(cancellationDate)) {
+	
+				return false;
+			}
+		}
+
+		return true;
 	}
 }
